@@ -1,0 +1,44 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">Move @ItemName to:</MudText>
+        <MudSelect T="string" @bind-Value="_selectedFolderId" Label="Destination" Variant="Variant.Outlined" Margin="Margin.Dense">
+            @foreach (var folder in Folders)
+            {
+                <MudSelectItem T="string" Value="@folder.Id" Disabled="@string.Equals(folder.Id, CurrentParentId, StringComparison.Ordinal)">
+                    @folder.Path
+                </MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@string.IsNullOrWhiteSpace(_selectedFolderId)" OnClick="Submit">Move</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string? _selectedFolderId;
+
+    [CascadingParameter]
+    public IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string ItemName { get; set; } = string.Empty;
+
+    [Parameter]
+    public IReadOnlyList<FileExplorerFolder> Folders { get; set; } = [];
+
+    [Parameter]
+    public string? CurrentParentId { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _selectedFolderId ??= Folders.FirstOrDefault(folder => !string.Equals(folder.Id, CurrentParentId, StringComparison.Ordinal))?.Id;
+    }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(_selectedFolderId));
+
+    private void Cancel() => MudDialog.Cancel();
+}

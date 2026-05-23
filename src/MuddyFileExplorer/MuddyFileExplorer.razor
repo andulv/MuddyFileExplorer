@@ -1,0 +1,173 @@
+@namespace MuddyFileExplorer.Components
+
+<MudPaper Class="muddy-file-explorer d-flex flex-column flex-1" Elevation="0" Outlined="true" >
+    <MudToolBar Dense="@Dense" Class="flex-none gap-2  muddy-file-explorer-toolbar" Style="padding-left:16px;padding-right:8px">
+
+
+        @if (AllowUpload)
+        {
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                           Accept="@AcceptedFileTypes"
+                           Style="margin-top:4px;margin-left:-8px"
+                           MaxFileSize="@MaxUploadFileSize"
+                           MaximumFileCount="@MaximumUploadCount"
+                           AppendMultipleFiles="true"
+                           DragAndDrop="true"
+                           Hidden="true"
+                           InputClass="muddy-file-explorer-input"
+                           FilesChanged="QueueUploadsAsync">
+                <CustomContent Context="upload">
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" aria-label="Upload"
+                            OnClick="upload.OpenFilePickerAsync" Disabled="@_busy"
+                            StartIcon="@Icons.Material.Filled.CloudUpload" Color="Color.Info">Upload
+                    </MudButton>
+                </CustomContent>
+            </MudFileUpload>
+        }
+        
+        @if (AllowCreateFolder)
+        {
+            <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                    OnClick="CreateFolderAsync" Disabled="@_busy"
+                    StartIcon="@Icons.Material.Filled.CreateNewFolder" Color="Color.Primary">New folder
+            </MudButton>
+        }
+ 
+        <MudSpacer />
+
+        <MudTextField T="string"
+                      @bind-Value="_searchText"
+                      Placeholder="Search"
+                      Margin="Margin.Dense"
+                      Variant="Variant.Text"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="true"
+                      Clearable="true"
+                      Class="muddy-file-explorer-search" />
+    </MudToolBar>
+
+    <MudDivider Class="flex-none" />
+
+    <div class="flex-none d-flex flex-direction-row">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0" Class="flex-1 muddy-file-explorer-breadcrumbs">
+            @foreach (var folder in _listing?.Breadcrumbs ?? [])
+            {
+                <MudButton Variant="Variant.Text"
+                        Size="Size.Small"
+                        StartIcon="@(folder.ParentId is null ? Icons.Material.Filled.Home : null)"
+                        OnClick="@(() => NavigateToFolderAsync(folder.Id))">
+                    @folder.Name
+                </MudButton>
+                @if (!ReferenceEquals(folder, (_listing?.Breadcrumbs ?? []).Last()))
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" Color="Color.Default" />
+                }
+            }
+            @if (_busy)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+            }
+        </MudStack>
+        <MudIconButton  Icon="@Icons.Material.Filled.Refresh" aria-label="Refresh"
+                        Size="Size.Small" Color="Color.Default"  Class="muddy-file-explorer-toolbar-action" 
+                        OnClick="RefreshAsync" Disabled="@_busy" />
+
+    </div>
+
+
+    @* @if (AllowUpload)
+    {
+        <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                       Accept="@AcceptedFileTypes"
+                       MaxFileSize="@MaxUploadFileSize"
+                       MaximumFileCount="@MaximumUploadCount"
+                       AppendMultipleFiles="true"
+                       DragAndDrop="true"
+                       @bind-Dragging="_dragging"
+                       InputClass="muddy-file-explorer-dropzone-input"
+                       Class="muddy-file-explorer-dropzone-upload"
+                       FilesChanged="QueueUploadsAsync">
+        </MudFileUpload>
+    } *@
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <MudAlert Severity="Severity.Error" Dense="true" Class="ma-2">@_error</MudAlert>
+    }
+                 @* * RowContextMenuClick="ContextRowClickedAsync" *@
+
+    <MudDataGrid T="FileExplorerItem"
+                 Items="@FilteredItems"
+                 Dense="@Dense"
+                 Hover="true"
+                 Striped="true"
+                 MultiSelection="@MultiSelection"
+                 SelectOnRowClick="false"
+                 SelectedItems="@_selectedItems"
+                 SelectedItemsChanged="SelectionChangedAsync"
+                 RowClick="RowClickedAsync"
+                 RowClassFunc="RowClassFunc"                 
+                 Bordered="false"
+                 Elevation="0"
+                 Class="flex-1 d-flex muddy-file-explorer-grid">
+        <Columns>
+            @if (MultiSelection)
+            {
+                <SelectColumn T="FileExplorerItem" />
+            }
+            <TemplateColumn Title="" Sortable="false" Filterable="false" CellClass="muddy-file-explorer-icon-cell">
+                <CellTemplate Context="cell">
+                    <MudIcon Icon="@GetIcon(cell.Item)" Size="Size.Small" Color="@GetIconColor(cell.Item)" />
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="item => item.Name" Title="Name" />
+            <TemplateColumn Title="Size" SortBy="item => item.Size ?? -1">
+                <CellTemplate Context="cell">
+                    <MudText Typo="Typo.body2">@FormatSize(cell.Item)</MudText>
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="item => item.Type" Title="Type" />
+            <TemplateColumn Title="Date" SortBy="item => item.ModifiedAt">
+                <CellTemplate Context="cell">
+                    <MudText Typo="Typo.body2">@cell.Item.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudText>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="" Sortable="false" Filterable="false" CellClass="muddy-file-explorer-actions-cell">
+                <CellTemplate Context="cell">
+                    <MudMenu Dense="@Dense" Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                        @RowMenu(cell.Item)
+                    </MudMenu>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Class="pa-4">No files found</MudText>
+        </NoRecordsContent>
+    </MudDataGrid>
+
+    @if (_uploads.Count > 0)
+    {
+        <MudDivider />
+        <MudStack Spacing="1" Class="muddy-file-explorer-upload-queue">
+            @foreach (var upload in _uploads)
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="muddy-file-explorer-upload-row">
+                    <MudIcon Icon="@GetUploadIcon(upload)" Size="Size.Small" Color="@GetUploadColor(upload)" />
+                    <MudText Typo="Typo.body2" Class="muddy-file-explorer-upload-name">@upload.Name</MudText>
+                    <MudText Typo="Typo.caption">@FormatBytes(upload.Size)</MudText>
+                    <MudProgressLinear Value="@upload.PercentComplete" Color="@GetUploadColor(upload)" Class="muddy-file-explorer-upload-progress" />
+                    <MudText Typo="Typo.caption">@GetUploadText(upload)</MudText>
+                </MudStack>
+            }
+        </MudStack>
+    }
+
+    @* <MudDivider /> *@
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="flex-none muddy-file-explorer-status">
+        <MudText Typo="Typo.caption">@StatusText</MudText>
+        <MudSpacer />
+        <MudText Typo="Typo.caption">@_operationText</MudText>
+    </MudStack>
+</MudPaper>
