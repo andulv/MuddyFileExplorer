@@ -465,33 +465,6 @@ public partial class MuddyFileExplorer
         return unit == 0 ? $"{bytes} B" : $"{value:0.#} {units[unit]}";
     }
 
-    private static string GetUploadIcon(FileExplorerUploadItem item) => item.Status switch
-    {
-        FileExplorerUploadStatus.Complete => Icons.Material.Filled.CheckCircle,
-        FileExplorerUploadStatus.Failed => Icons.Material.Filled.Error,
-        FileExplorerUploadStatus.Canceled => Icons.Material.Filled.Cancel,
-        FileExplorerUploadStatus.Uploading => Icons.Material.Filled.CloudUpload,
-        _ => Icons.Material.Filled.Schedule
-    };
-
-    private static Color GetUploadColor(FileExplorerUploadItem item) => item.Status switch
-    {
-        FileExplorerUploadStatus.Complete => Color.Success,
-        FileExplorerUploadStatus.Failed => Color.Error,
-        FileExplorerUploadStatus.Canceled => Color.Warning,
-        FileExplorerUploadStatus.Uploading => Color.Primary,
-        _ => Color.Default
-    };
-
-    private static string GetUploadText(FileExplorerUploadItem item) => item.Status switch
-    {
-        FileExplorerUploadStatus.Uploading => $"{item.PercentComplete}%",
-        FileExplorerUploadStatus.Complete => "Done",
-        FileExplorerUploadStatus.Failed => item.Message ?? "Failed",
-        FileExplorerUploadStatus.Canceled => "Canceled",
-        _ => "Queued"
-    };
-
     private bool AllUploadsComplete => _uploads.Count > 0 && _uploads.All(u =>
         u.Status is FileExplorerUploadStatus.Complete or FileExplorerUploadStatus.Failed or FileExplorerUploadStatus.Canceled);
 
@@ -505,8 +478,6 @@ public partial class MuddyFileExplorer
             return totalSize <= 0 ? 0 : (int)Math.Min(100, Math.Round(totalUploaded * 100d / totalSize));
         }
     }
-
-    private static string GetConsolidatedUploadIcon() => Icons.Material.Filled.CloudUpload;
 
     private Color GetConsolidatedUploadColor()
     {
