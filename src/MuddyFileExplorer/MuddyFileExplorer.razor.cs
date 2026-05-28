@@ -530,4 +530,53 @@ public partial class MuddyFileExplorer
         FileExplorerUploadStatus.Canceled => "Canceled",
         _ => "Queued"
     };
+
+    private bool AllUploadsComplete => _uploads.Count > 0 && _uploads.All(u =>
+        u.Status is FileExplorerUploadStatus.Complete or FileExplorerUploadStatus.Failed or FileExplorerUploadStatus.Canceled);
+
+    private int ConsolidatedUploadPercent
+    {
+        get
+        {
+            if (_uploads.Count == 0) return 0;
+            var totalSize = _uploads.Sum(u => u.Size);
+            var totalUploaded = _uploads.Sum(u => u.BytesUploaded);
+            return totalSize <= 0 ? 0 : (int)Math.Min(100, Math.Round(totalUploaded * 100d / totalSize));
+        }
+    }
+
+    private static string GetConsolidatedUploadIcon() => Icons.Material.Filled.CloudUpload;
+
+    private Color GetConsolidatedUploadColor()
+    {
+        if (_uploads.Any(u => u.Status == FileExplorerUploadStatus.Failed)) return Color.Error;
+        if (AllUploadsComplete) return Color.Success;
+        return Color.Primary;
+    }
+
+    private string GetConsolidatedUploadText()
+    {
+        var completed = _uploads.Count(u => u.Status is FileExplorerUploadStatus.Complete or FileExplorerUploadStatus.Failed or FileExplorerUploadStatus.Canceled);
+        var total = _uploads.Count;
+        var current = _uploads.FirstOrDefault(u => u.Status == FileExplorerUploadStatus.Uploading);
+
+        if (AllUploadsComplete)
+        {
+            var failed = _uploads.Count(u => u.Status == FileExplorerUploadStatus.Failed);
+            var totalBytes = _uploads.Where(u => u.Status == FileExplorerUploadStatus.Complete).Sum(u => u.Size);
+            return failed > 0
+                ? $"{completed}/{total} done ({failed} failed)"
+                : $"{total}/{total} done · {FormatBytes(totalBytes)}";
+        }
+
+        return current is not null
+            ? $"{completed + 1}/{total} · {current.Name}"
+            : $"{completed}/{total}";
+    }
+
+    private async Task DismissUploadsAsync()
+    {
+        _uploads.Clear();
+        await InvokeAsync(StateHasChanged);
+    }
 }
