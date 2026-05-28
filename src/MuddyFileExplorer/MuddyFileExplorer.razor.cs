@@ -16,7 +16,6 @@ public partial class MuddyFileExplorer
     private string? _error;
     private string _operationText = "Ready";
     private bool _busy;
-    private bool _dragging;
     private FileExplorerItem? _currentItem;
 
     [Parameter, EditorRequired]
@@ -27,15 +26,6 @@ public partial class MuddyFileExplorer
 
     [Parameter]
     public bool Dense { get; set; } = true;
-
-    /// <summary>
-    /// When true, applies compact CSS custom-property overrides suitable for
-    /// sidebar / narrow-panel usage: tighter cell padding, smaller font and icons,
-    /// and reduced row height. You can also override individual --muddy-fe-* variables
-    /// via Style for finer control.
-    /// </summary>
-    [Parameter]
-    public bool Compact { get; set; }
 
     [Parameter]
     public bool MultiSelection { get; set; } = true;
@@ -66,14 +56,6 @@ public partial class MuddyFileExplorer
 
     [Parameter]
     public string? AcceptedFileTypes { get; set; }
-
-    /// <summary>
-    /// Additional CSS custom-property overrides for density, e.g.
-    /// "--muddy-fe-cell-padding: 2px 4px; --muddy-fe-font-size: 0.75rem".
-    /// Applied after the <see cref="Compact"/> preset so you can fine-tune.
-    /// </summary>
-    [Parameter]
-    public string? DensityStyle { get; set; }
 
     [Parameter]
     public EventCallback<IReadOnlyCollection<FileExplorerItem>> SelectedItemsChanged { get; set; }
@@ -111,8 +93,6 @@ public partial class MuddyFileExplorer
                 item.Type.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
         }
     }
-
-    private string DropZoneClass => _dragging ? "muddy-file-explorer-dropzone muddy-file-explorer-dropzone-active" : "muddy-file-explorer-dropzone";
 
     private string StatusText
     {
@@ -242,13 +222,6 @@ public partial class MuddyFileExplorer
         {
             await OpenItemAsync(args.Item);
         }
-    }
-
-    private async Task ContextRowClickedAsync(DataGridRowClickEventArgs<FileExplorerItem> args)
-    {
-        _selectedItems.Clear();
-        _selectedItems.Add(args.Item);
-        await SelectedItemsChanged.InvokeAsync(_selectedItems);
     }
 
     private string RowClassFunc(FileExplorerItem item, int rowIndex) =>
@@ -439,18 +412,6 @@ public partial class MuddyFileExplorer
         MaxWidth = MaxWidth.ExtraSmall,
         FullWidth = true
     };
-
-    private Task SetDragging(DragEventArgs args)
-    {
-        _dragging = true;
-        return Task.CompletedTask;
-    }
-
-    private Task ClearDragging(DragEventArgs args)
-    {
-        _dragging = false;
-        return Task.CompletedTask;
-    }
 
     private static string GetIcon(FileExplorerItem item)
     {

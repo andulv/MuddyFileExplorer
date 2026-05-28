@@ -1,4 +1,67 @@
-/* All MuddyFileExplorer styles are in wwwroot/MuddyFileExplorer.css (static, non-scoped).
- * Blazor scoped CSS cannot target child component root elements (MudPaper, MudToolBar,
- * MudStack, MudDataGrid) because the scope attribute is not placed on them.
- * Keeping this file empty to avoid confusion with duplicate rules. */
+.muddy-file-explorer-shell {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+::deep .muddy-file-explorer {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+::deep .muddy-file-explorer-toolbar {
+    container-type: inline-size;
+    container-name: fe-toolbar;
+    min-height: 40px;
+}
+
+::deep .muddy-file-explorer-toolbar .mud-button-root {
+    white-space: nowrap;
+}
+
+@container fe-toolbar (max-width: 360px) {
+    ::deep .muddy-file-explorer-toolbar .mud-button-root .mud-button-label > :not(.mud-icon-root) {
+        display: none;
+    }
+}
+
+::deep .muddy-file-explorer-search {
+    min-width: 160px;
+    max-width: 260px;
+}
+
+::deep .muddy-file-explorer-grid {
+    min-height: 0;
+}
+
+::deep .muddy-file-explorer-grid table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+::deep .muddy-file-explorer-grid .mud-table-dense .mud-table-row .mud-table-cell {
+    padding: 2px !important;
+    padding-inline-start: 2px !important;
+    padding-inline-end: 2px !important;
+}
+
+::deep .muddy-file-explorer-upload-progress {
+    min-width: 90px;
+    max-width: 160px;
+}
+
+::deep .muddy-file-explorer-upload-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+::deep .muddy-file-explorer-row-current {
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent) !important;
+}
+
+::deep .muddy-file-explorer-row-current:hover {
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 18%, transparent) !important;
+}
