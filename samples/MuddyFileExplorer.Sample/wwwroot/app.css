@@ -1,9 +1,14 @@
+/* Bound the sample host to the viewport for application-style demos where
+   explorers, grids, split panes, or other workspace components should scroll
+   internally instead of growing the browser page. */
 .sample-layout {
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
 }
 
+/* Reusable min-height reset for full-height page roots and pane containers
+   inside flex layouts when the child explorer/grid/editor should own scrolling. */
 .sample-min-height-0 {
     min-height: 0;
 }
