@@ -2,6 +2,8 @@
 
 A standalone MudBlazor-based file explorer component with a compact list UI. Upload, copy, move, delete, etc.
 
+![MuddyFileExplorer sample screenshot](doc/screenshot-sample-readme.png)
+
 ## Projects
 
 - `src/MuddyFileExplorer` - reusable Razor class library
@@ -71,4 +73,3 @@ dotnet run --project samples/MuddyFileExplorer.Sample/MuddyFileExplorer.Sample.c
 ```
 
 The sample stores demo files under `samples/MuddyFileExplorer.Sample/App_Data/FileExplorerSandbox`. It normalizes file paths, rejects traversal outside the sandbox, and exposes downloads through `/download/{id}`.
-
