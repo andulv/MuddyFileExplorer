@@ -7,13 +7,16 @@ using Microsoft.Extensions.Logging;
 
 namespace MuddyFileExplorer.Sample.Services;
 
-public sealed class SandboxFileExplorerProvider(IWebHostEnvironment environment, ILogger<SandboxFileExplorerProvider> logger) : IFileExplorerProvider
+public sealed class SandboxFileExplorerProvider(
+    SandboxSeedDataService seedData,
+    ILogger<SandboxFileExplorerProvider> logger) : IFileExplorerProvider
 {
-    private readonly string _rootPath = Path.Combine(environment.ContentRootPath, "App_Data", "FileExplorerSandbox");
+    private readonly SandboxSeedDataService _seedData = seedData;
+    private readonly string _rootPath = seedData.RootPath;
 
     public async Task<FileExplorerFolderListing> ListFolderAsync(string? folderId, CancellationToken cancellationToken = default)
     {
-        EnsureSeedData();
+        _seedData.EnsureSeedData();
 
         var folderPath = ResolvePath(folderId);
         if (!Directory.Exists(folderPath))
@@ -70,7 +73,7 @@ public sealed class SandboxFileExplorerProvider(IWebHostEnvironment environment,
 
     public Task<IReadOnlyList<FileExplorerFolder>> ListMoveTargetsAsync(CancellationToken cancellationToken = default)
     {
-        EnsureSeedData();
+        _seedData.EnsureSeedData();
 
         var folders = new List<FileExplorerFolder>
         {
@@ -285,7 +288,7 @@ public sealed class SandboxFileExplorerProvider(IWebHostEnvironment environment,
 
     private string ResolvePath(string? id)
     {
-        EnsureSeedData();
+        _seedData.EnsureSeedData();
 
         var relative = DecodeId(id);
         var combined = Path.GetFullPath(Path.Combine(_rootPath, relative));
@@ -380,29 +383,4 @@ public sealed class SandboxFileExplorerProvider(IWebHostEnvironment environment,
         _ => "application/octet-stream"
     };
 
-    private void EnsureSeedData()
-    {
-        Directory.CreateDirectory(_rootPath);
-
-        WriteIfMissing("README.md", "# Mud FileExplorer sample\n\nThis sandbox is safe to rename, move, upload into, and delete from.\n");
-        WriteIfMissing("notes.txt", "Compact MudBlazor file explorer sample data.\n");
-        WriteIfMissing("Documents/roadmap.md", "# Roadmap\n\n- Dense grid\n- Upload queue\n- Context actions\n");
-        WriteIfMissing("Documents/specification.pdf", "PDF placeholder for file type display.\n");
-        WriteIfMissing("Documents/minutes-2026-05.txt", "Meeting minutes – discussed roadmap priorities and upload UX.\n");
-        WriteIfMissing("Images/photo-list.txt", "Imagine thumbnails in a later version; v1 stays compact.\n");
-        WriteIfMissing("Images/banner.txt", "Placeholder for a banner image file.\n");
-        WriteIfMissing("Code/example.json", "{\n  \"component\": \"MuddyFileExplorer\",\n  \"dense\": true\n}\n");
-        WriteIfMissing("Code/appsettings.json", "{\n  \"Logging\": {\n    \"LogLevel\": {\n      \"Default\": \"Information\"\n    }\n  }\n}\n");
-    }
-
-    private void WriteIfMissing(string relativePath, string content)
-    {
-        var path = Path.Combine(_rootPath, relativePath);
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-
-        if (!File.Exists(path))
-        {
-            File.WriteAllText(path, content);
-        }
-    }
 }

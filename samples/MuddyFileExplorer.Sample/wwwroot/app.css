@@ -1,6 +1,9 @@
- /* Reduce padding in MuddyFileExplorer to make it more compact */
-.muddy-file-explorer .mud-table-dense * .mud-table-row .mud-table-cell {
-    padding: 2px 2px !important;
-    padding-inline-start: 2px !important;
-    padding-inline-end: 2px !important;
+.sample-layout {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.sample-min-height-0 {
+    min-height: 0;
 }

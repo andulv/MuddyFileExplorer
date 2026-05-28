@@ -1,0 +1,42 @@
+@page "/sample-full-size"
+@page "/counter"
+
+@inject SandboxFileExplorerProvider FileProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>Full Height Demo</PageTitle>
+
+<div class="sample-min-height-0 d-flex flex-1 overflow-hidden mud-width-full">
+    <MuddyFileExplorer Provider="@FileProvider"
+                       Dense="true"
+                       MultiSelection="true"
+                       MaxUploadFileSize="104857600"
+                       ItemOpened="OnItemOpened"
+                       OperationCompleted="OnOperationCompleted" />
+</div>
+
+@code {
+    private Task OnItemOpened(FileExplorerItemEventArgs args)
+    {
+        if (!args.Item.IsDirectory)
+        {
+            Snackbar.Add($"Opened {args.Item.Name}", Severity.Info);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnOperationCompleted(FileExplorerOperationEventArgs args)
+    {
+        var severity = args.Result.Success ? Severity.Success : Severity.Error;
+        var icon = args.Result.Success ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error;
+        var message = string.IsNullOrWhiteSpace(args.Result.Message) ? args.Operation : args.Result.Message;
+        Snackbar.Add(message, severity, config =>
+        {
+            config.Icon = icon;
+            config.ShowCloseIcon = true;
+        });
+
+        return Task.CompletedTask;
+    }
+}

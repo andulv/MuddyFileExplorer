@@ -1,0 +1,78 @@
+@page "/sample-simple"
+@page "/sample-page-scroll"
+
+@inject SandboxFileExplorerProvider FileProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>Scroll Page Demo</PageTitle>
+
+<div class="sample-min-height-0 mud-height-full overflow-auto">
+    <MudPaper Class="pa-6 mb-6">
+        <MudText Typo="Typo.h4" GutterBottom="true">Scroll Page Demo</MudText>
+        <MudText Typo="Typo.body1" GutterBottom="true">
+            This page shows the explorer in a regular document flow instead of stretching it to fill the viewport.
+            It is handy when we want to inspect how the component behaves inside a longer article-like layout.
+        </MudText>
+        <MudText Typo="Typo.body1" GutterBottom="true">
+            The content above and below the explorer should scroll naturally with the page, while the explorer itself keeps a fixed height.
+            That gives us a straightforward sample for embedded usage in dashboards, help pages, and content-heavy admin screens.
+        </MudText>
+        <MudText Typo="Typo.body1">
+            Use this variant to test interactions after the browser has already scrolled, and to confirm the explorer still feels balanced when it is not the main layout primitive on the page.
+        </MudText>
+    </MudPaper>
+
+    <div class="sample-min-height-0 d-flex mud-width-full" style="height:800px;">
+        <MuddyFileExplorer Provider="@FileProvider"
+                           Dense="true"
+                           MultiSelection="true"
+                           MaxUploadFileSize="104857600"
+                           ItemOpened="OnItemOpened"
+                           OperationCompleted="OnOperationCompleted" />
+    </div>
+
+    <MudPaper Class="pa-6 mt-6">
+        <MudText Typo="Typo.h5" GutterBottom="true">Longer Page Content</MudText>
+        <MudText Typo="Typo.body1" GutterBottom="true">
+            After the fixed-height explorer we keep going with ordinary page content so the sample can grow well beyond the browser height.
+            That makes it easier to evaluate spacing, sticky browser chrome, pointer behavior, and how upload dialogs feel when the user is somewhere in the middle of a long page.
+        </MudText>
+        <MudText Typo="Typo.body1" GutterBottom="true">
+            We can also use this page to sanity-check how selection details, snackbars, and context menus behave when the surrounding layout is simple block flow rather than a full-screen flex arrangement.
+            If we later add markdown previews or richer help text, this page becomes a good approximation of those scenarios.
+        </MudText>
+        <MudText Typo="Typo.body1" GutterBottom="true">
+            The text intentionally runs a bit long so the browser has real scrolling work to do.
+            That keeps this sample useful even when the viewport is tall, and it gives us a more honest baseline than a tiny stub page would.
+        </MudText>
+        <MudText Typo="Typo.body1">
+            Between this page, the full-size single explorer page, and the split layout page, we get three practical integration patterns that cover most of the sample app behavior we want to demonstrate.
+        </MudText>
+    </MudPaper>
+</div>
+
+@code {
+    private Task OnItemOpened(FileExplorerItemEventArgs args)
+    {
+        if (!args.Item.IsDirectory)
+        {
+            Snackbar.Add($"Opened {args.Item.Name}", Severity.Info);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnOperationCompleted(FileExplorerOperationEventArgs args)
+    {
+        var severity = args.Result.Success ? Severity.Success : Severity.Error;
+        var icon = args.Result.Success ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error;
+        var message = string.IsNullOrWhiteSpace(args.Result.Message) ? args.Operation : args.Result.Message;
+        Snackbar.Add(message, severity, config =>
+        {
+            config.Icon = icon;
+            config.ShowCloseIcon = true;
+        });
+
+        return Task.CompletedTask;
+    }
+}

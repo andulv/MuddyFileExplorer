@@ -1,0 +1,114 @@
+@page "/sample-full-size-split"
+
+@inject SandboxFileExplorerProvider FileProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>Split Layout Demo</PageTitle>
+
+<div class="sample-min-height-0 d-flex flex-1 overflow-hidden mud-width-full">
+    <MudSplitPanel ResetOnDoubleClick="true"
+                   Class="sample-min-height-0 d-flex flex-1 mud-width-full"
+                   ClassFirstPanel="d-flex"
+                   ClassSecondPanel="d-flex">
+        <FirstPanel>
+            <MuddyFileExplorer Provider="@FileProvider"
+                               Dense="true"
+                               MultiSelection="true"
+                               MaxUploadFileSize="104857600"
+                               ItemOpened="OnItemOpened"
+                               OperationCompleted="OnOperationCompleted"
+                               CurrentItemChanged="OnCurrentItemChanged" />
+        </FirstPanel>
+        <SecondPanel>
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="sample-min-height-0 flex-1 pa-6">
+                @if (_currentItem is not null)
+                {
+                    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@GetIcon(_currentItem)" Size="Size.Large" Color="@GetIconColor(_currentItem)" />
+                        <MudText Typo="Typo.h6">@_currentItem.Name</MudText>
+                        <MudText Typo="Typo.body2">Type: @_currentItem.Type</MudText>
+                        @if (!_currentItem.IsDirectory)
+                        {
+                            <MudText Typo="Typo.body2">Size: @FormatBytes(_currentItem.Size ?? 0)</MudText>
+                        }
+                        <MudText Typo="Typo.body2">Modified: @_currentItem.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudText>
+                    </MudStack>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body1" Color="Color.Default">Select a file or folder to see details</MudText>
+                }
+            </MudStack>
+        </SecondPanel>
+    </MudSplitPanel>
+</div>
+
+@code {
+    private FileExplorerItem? _currentItem;
+
+    private Task OnCurrentItemChanged(FileExplorerItem item)
+    {
+        _currentItem = item;
+        return Task.CompletedTask;
+    }
+
+    private Task OnItemOpened(FileExplorerItemEventArgs args)
+    {
+        if (!args.Item.IsDirectory)
+        {
+            Snackbar.Add($"Opened {args.Item.Name}", Severity.Info);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnOperationCompleted(FileExplorerOperationEventArgs args)
+    {
+        var severity = args.Result.Success ? Severity.Success : Severity.Error;
+        var icon = args.Result.Success ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error;
+        var message = string.IsNullOrWhiteSpace(args.Result.Message) ? args.Operation : args.Result.Message;
+        Snackbar.Add(message, severity, config =>
+        {
+            config.Icon = icon;
+            config.ShowCloseIcon = true;
+        });
+
+        return Task.CompletedTask;
+    }
+
+    private static string FormatBytes(long bytes) => bytes switch
+    {
+        <= 0 => "0 B",
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
+        < 1024 * 1024 * 1024 => $"{bytes / (1024.0 * 1024):F1} MB",
+        _ => $"{bytes / (1024.0 * 1024 * 1024):F1} GB"
+    };
+
+    private static string GetIcon(FileExplorerItem item)
+    {
+        if (item.IsDirectory) return Icons.Material.Filled.Folder;
+        return item.Type.ToLowerInvariant() switch
+        {
+            "image" => Icons.Material.Filled.Image,
+            "pdf" => Icons.Material.Filled.PictureAsPdf,
+            "text" or "markdown" => Icons.Material.Filled.Article,
+            "archive" => Icons.Material.Filled.FolderZip,
+            "spreadsheet" => Icons.Material.Filled.TableChart,
+            "code" => Icons.Material.Filled.Code,
+            _ => Icons.Material.Filled.InsertDriveFile
+        };
+    }
+
+    private static Color GetIconColor(FileExplorerItem item)
+    {
+        if (item.IsDirectory) return Color.Warning;
+        return item.Type.ToLowerInvariant() switch
+        {
+            "image" => Color.Success,
+            "pdf" => Color.Error,
+            "code" => Color.Info,
+            _ => Color.Default
+        };
+    }
+}

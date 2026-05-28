@@ -9,6 +9,7 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddSingleton<SandboxSeedDataService>();
 builder.Services.AddSingleton<SandboxFileExplorerProvider>();
 
 var app = builder.Build();
