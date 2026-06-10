@@ -1,4 +1,5 @@
 using System.Buffers.Text;
+using System.IO.Compression;
 using System.Net;
 using System.Text;
 using MuddyFileExplorer;
@@ -38,7 +39,8 @@ public sealed class SandboxFileExplorerProvider(
                 Name = info.Name,
                 IsDirectory = true,
                 Type = "Folder",
-                ModifiedAt = info.LastWriteTimeUtc
+                ModifiedAt = info.LastWriteTimeUtc,
+                CanDownload = true
             });
         }
 
@@ -56,7 +58,7 @@ public sealed class SandboxFileExplorerProvider(
                 Type = GetFileType(info.Extension),
                 ContentType = GetContentType(info.Extension),
                 ModifiedAt = info.LastWriteTimeUtc,
-                DownloadUrl = $"/download/{WebUtility.UrlEncode(EncodeId(relative))}"
+                CanDownload = true
             });
         }
 
@@ -240,18 +242,67 @@ public sealed class SandboxFileExplorerProvider(
         return FileExplorerOperationResult.Ok("Upload complete.");
     }
 
-    public string GetDownloadPath(string id)
+    public Task<FileExplorerDownloadResult> DownloadAsync(string itemId, CancellationToken cancellationToken = default)
     {
-        var path = ResolvePath(id);
-        if (!File.Exists(path))
+        var path = ResolvePath(itemId);
+
+        if (File.Exists(path))
         {
-            throw new FileNotFoundException("File not found.");
+            var fileName = Path.GetFileName(path);
+            var contentType = GetContentType(Path.GetExtension(fileName));
+            return Task.FromResult(new FileExplorerDownloadResult(fileName, contentType, File.OpenRead(path)));
         }
 
-        return path;
+        if (Directory.Exists(path))
+        {
+            var folderName = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            if (string.IsNullOrWhiteSpace(folderName))
+            {
+                folderName = "folder";
+            }
+
+            var tempZip = Path.Combine(Path.GetTempPath(), $"muddy-sample-{Guid.NewGuid():N}.zip");
+            ZipFile.CreateFromDirectory(path, tempZip, CompressionLevel.Fastest, includeBaseDirectory: false);
+
+            var stream = new TempFileReadStream(tempZip);
+            return Task.FromResult(new FileExplorerDownloadResult($"{folderName}.zip", "application/zip", stream));
+        }
+
+        throw new FileNotFoundException("Item not found.");
     }
 
-    public static string GetContentTypeForDownload(string fileName) => GetContentType(Path.GetExtension(fileName));
+    private sealed class TempFileReadStream(string tempFilePath)
+        : FileStream(tempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    {
+        private readonly string _tempFilePath = tempFilePath;
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            TryDeleteTempFile();
+        }
+
+        public override async ValueTask DisposeAsync()
+        {
+            await base.DisposeAsync();
+            TryDeleteTempFile();
+        }
+
+        private void TryDeleteTempFile()
+        {
+            try
+            {
+                if (File.Exists(_tempFilePath))
+                {
+                    File.Delete(_tempFilePath);
+                }
+            }
+            catch
+            {
+                // Best-effort cleanup for temp archive file.
+            }
+        }
+    }
 
     private IReadOnlyList<FileExplorerFolder> BuildBreadcrumbs(string relativeFolder)
     {

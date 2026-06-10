@@ -18,8 +18,6 @@ public sealed record FileExplorerItem
 
     public DateTimeOffset ModifiedAt { get; init; }
 
-    public string? DownloadUrl { get; init; }
-
     public bool CanDownload { get; init; } = true;
 
     public bool CanRename { get; init; } = true;

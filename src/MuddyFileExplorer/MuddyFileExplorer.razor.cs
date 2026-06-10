@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using MudBlazor;
 using MuddyFileExplorer;
 
 namespace MuddyFileExplorer.Components;
 
-public partial class MuddyFileExplorer
+public partial class MuddyFileExplorer : IAsyncDisposable
 {
     private FileExplorerFolderListing? _listing;
     private readonly HashSet<FileExplorerItem> _selectedItems = [];
@@ -17,6 +18,7 @@ public partial class MuddyFileExplorer
     private string _operationText = "Ready";
     private bool _busy;
     private FileExplorerItem? _currentItem;
+    private IJSObjectReference? _jsModule;
 
     [Parameter, EditorRequired]
     public IFileExplorerProvider Provider { get; set; } = default!;
@@ -71,6 +73,9 @@ public partial class MuddyFileExplorer
 
     [Inject]
     private IDialogService DialogService { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -127,12 +132,21 @@ public partial class MuddyFileExplorer
             builder.CloseComponent();
         }
 
-        if (AllowDownload && !item.IsDirectory && item.CanDownload && !string.IsNullOrWhiteSpace(item.DownloadUrl))
+        if (!item.IsDirectory && CanOpenInNewTab(item))
+        {
+            builder.OpenComponent<MudMenuItem>(sequence++);
+            builder.AddAttribute(sequence++, "Icon", Icons.Material.Filled.OpenInNew);
+            builder.AddAttribute(sequence++, "Label", "Open");
+            builder.AddAttribute(sequence++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OpenInNewTabAsync(item)));
+            builder.CloseComponent();
+        }
+
+        if (AllowDownload && item.CanDownload)
         {
             builder.OpenComponent<MudMenuItem>(sequence++);
             builder.AddAttribute(sequence++, "Icon", Icons.Material.Filled.Download);
             builder.AddAttribute(sequence++, "Label", "Download");
-            builder.AddAttribute(sequence++, "Href", item.DownloadUrl);
+            builder.AddAttribute(sequence++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => DownloadAsync(item)));
             builder.CloseComponent();
         }
 
@@ -308,6 +322,78 @@ public partial class MuddyFileExplorer
         }
 
         await RunOperationAsync("Delete", item, () => Provider.DeleteAsync(item.Id));
+    }
+
+    private async Task DownloadAsync(FileExplorerItem item)
+    {
+        _error = null;
+        _operationText = $"Downloading {item.Name}...";
+
+        try
+        {
+            var download = await Provider.DownloadAsync(item.Id);
+            await using var content = download.Content;
+            using var streamRef = new DotNetStreamReference(content);
+
+            var module = await GetJsModuleAsync();
+            await module.InvokeVoidAsync("downloadFileFromStream", download.FileName, download.ContentType, streamRef);
+
+            _operationText = $"Downloaded {download.FileName}";
+            await OperationCompleted.InvokeAsync(new FileExplorerOperationEventArgs("Download", item, FileExplorerOperationResult.Ok()));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _operationText = "Download failed";
+            await OperationCompleted.InvokeAsync(new FileExplorerOperationEventArgs("Download", item, FileExplorerOperationResult.Fail(ex.Message)));
+        }
+    }
+
+    private async Task OpenInNewTabAsync(FileExplorerItem item)
+    {
+        _error = null;
+        _operationText = $"Opening {item.Name}...";
+
+        try
+        {
+            var download = await Provider.DownloadAsync(item.Id);
+            await using var content = download.Content;
+            using var streamRef = new DotNetStreamReference(content);
+
+            var module = await GetJsModuleAsync();
+            await module.InvokeVoidAsync("openFileFromStream", download.ContentType, streamRef);
+
+            _operationText = $"Opened {download.FileName}";
+            await OperationCompleted.InvokeAsync(new FileExplorerOperationEventArgs("Open", item, FileExplorerOperationResult.Ok()));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _operationText = "Open failed";
+            await OperationCompleted.InvokeAsync(new FileExplorerOperationEventArgs("Open", item, FileExplorerOperationResult.Fail(ex.Message)));
+        }
+    }
+
+    private static bool CanOpenInNewTab(FileExplorerItem item)
+    {
+        var contentType = item.ContentType;
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return false;
+        }
+
+        return contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "application/pdf", StringComparison.OrdinalIgnoreCase)
+            || contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "application/json", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<IJSObjectReference> GetJsModuleAsync()
+    {
+        _jsModule ??= await JsRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            "./_content/MuddyFileExplorer/muddyFileExplorer.js");
+        return _jsModule;
     }
 
     private async Task QueueUploadsAsync(IReadOnlyList<IBrowserFile>? files)
@@ -510,5 +596,14 @@ public partial class MuddyFileExplorer
     {
         _uploads.Clear();
         await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule is not null)
+        {
+            await _jsModule.DisposeAsync();
+            _jsModule = null;
+        }
     }
 }

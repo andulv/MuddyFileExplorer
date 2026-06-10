@@ -103,7 +103,7 @@
                 <col style="width:80px;" />
                 <col style="width:80px;" />
                 <col style="width:140px;" />
-                <col style="width:36px;" />
+                <col style="width:48px;" />
             </ColGroup>
             <Columns>
                 @if (MultiSelection)
@@ -115,24 +115,24 @@
                         <MudIcon Icon="@GetIcon(cell.Item)" Size="Size.Small" Color="@GetIconColor(cell.Item)" />
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn Title="Name" SortBy="item => item.Name"
+                <TemplateColumn Title="Name" SortBy="item => item.Name" Sortable="true"
                                 CellStyle="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0;">
                     <CellTemplate Context="cell">
                         <span title="@cell.Item.Name">@cell.Item.Name</span>
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn Title="Size" SortBy="item => item.Size ?? -1" CellStyle="white-space:nowrap;">
+                <TemplateColumn Title="Size" SortBy="item => item.Size ?? -1" Sortable="true" CellStyle="white-space:nowrap;">
                     <CellTemplate Context="cell">
                         <MudText Typo="Typo.body2">@FormatSize(cell.Item)</MudText>
                     </CellTemplate>
                 </TemplateColumn>
                 <PropertyColumn Property="item => item.Type" Title="Type" CellStyle="white-space:nowrap;" />
-                <TemplateColumn Title="Date" SortBy="item => item.ModifiedAt" CellStyle="white-space:nowrap;">
+                <TemplateColumn Title="Date" SortBy="item => item.ModifiedAt" Sortable="true" CellStyle="white-space:nowrap;">
                     <CellTemplate Context="cell">
                         <MudText Typo="Typo.body2">@cell.Item.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudText>
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn Title="" Sortable="false" Filterable="false">
+                <TemplateColumn Title="" Sortable="false" Filterable="false" CellStyle="white-space:nowrap;padding-right:8px;">
                     <CellTemplate Context="cell">
                         <MudMenu Dense="@Dense" Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
                             @RowMenu(cell.Item)

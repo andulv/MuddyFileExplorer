@@ -17,7 +17,7 @@ A standalone MudBlazor-based file explorer component with a compact list UI. Upl
 - Search/filter box
 - Upload button and drag-and-drop upload area
 - Queued uploads with per-file progress
-- Download links supplied by the host provider
+- Provider-driven download action (files and folders)
 - Context actions for open, rename, move, delete, and download
 - Status bar for selected item/folder summary
 
@@ -60,6 +60,7 @@ Hosts implement `IFileExplorerProvider` for file operations:
 - rename item
 - move item
 - delete item
+- download item (file stream or folder zip stream)
 - upload file with progress
 
 The UI-facing models use opaque item IDs. Providers should not expose physical paths to the browser.
@@ -72,4 +73,4 @@ Run the sample from this folder:
 dotnet run --project samples/MuddyFileExplorer.Sample/MuddyFileExplorer.Sample.csproj
 ```
 
-The sample stores demo files under `samples/MuddyFileExplorer.Sample/App_Data/FileExplorerSandbox`. It normalizes file paths, rejects traversal outside the sandbox, and exposes downloads through `/download/{id}`.
+The sample stores demo files under `samples/MuddyFileExplorer.Sample/App_Data/FileExplorerSandbox`. It normalizes file paths, rejects traversal outside the sandbox, and serves downloads through the provider download API.

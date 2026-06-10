@@ -16,6 +16,8 @@ public interface IFileExplorerProvider
 
     Task<FileExplorerOperationResult> DeleteAsync(string itemId, CancellationToken cancellationToken = default);
 
+    Task<FileExplorerDownloadResult> DownloadAsync(string itemId, CancellationToken cancellationToken = default);
+
     Task<FileExplorerOperationResult> UploadAsync(
         string? folderId,
         IBrowserFile file,
