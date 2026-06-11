@@ -60,6 +60,9 @@ public partial class MuddyFileExplorer : IAsyncDisposable
     public string? AcceptedFileTypes { get; set; }
 
     [Parameter]
+    public RenderFragment<FileExplorerItem>? CustomRowMenuItems { get; set; }
+
+    [Parameter]
     public EventCallback<IReadOnlyCollection<FileExplorerItem>> SelectedItemsChanged { get; set; }
 
     [Parameter]
@@ -135,13 +138,9 @@ public partial class MuddyFileExplorer : IAsyncDisposable
             builder.CloseComponent();
         }
 
-        if (!item.IsDirectory && CanOpenInNewTab(item))
+        if (CustomRowMenuItems is not null)
         {
-            builder.OpenComponent<MudMenuItem>(sequence++);
-            builder.AddAttribute(sequence++, "Icon", Icons.Material.Filled.OpenInNew);
-            builder.AddAttribute(sequence++, "Label", "Open");
-            builder.AddAttribute(sequence++, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OpenInNewTabAsync(item)));
-            builder.CloseComponent();
+            builder.AddContent(sequence++, CustomRowMenuItems(item));
         }
 
         if (AllowDownload && item.CanDownload)
@@ -196,7 +195,6 @@ public partial class MuddyFileExplorer : IAsyncDisposable
             _currentItem = null;
             _operationText = "Ready";
             await SelectedItemsChanged.InvokeAsync(_selectedItems);
-            await CurrentItemChanged.InvokeAsync(_currentItem);
             await CurrentFolderChanged.InvokeAsync(_currentFolderId);
         }
         catch (Exception ex)
@@ -212,22 +210,24 @@ public partial class MuddyFileExplorer : IAsyncDisposable
 
     public Task RefreshAsync() => LoadFolderAsync(_currentFolderId);
 
-    private Task NavigateToFolderAsync(string? folderId) => LoadFolderAsync(folderId);
+    public Task NavigateToFolderAsync(string? folderId) => LoadFolderAsync(folderId);
 
     /// <summary>
-    /// Programmatically navigates to the given folder and optionally selects an item within it.
+    /// Programmatically navigates to the parent folder for the item and selects it.
     /// </summary>
-    public async Task NavigateToFileAsync(string? folderId, string? itemId = null)
+    public async Task NavigateToItemAsync(string itemId)
     {
-        await LoadFolderAsync(folderId);
-        if (itemId is not null)
+        var folderId = Path.GetDirectoryName(itemId)?.Replace('\\', '/');
+        await LoadFolderAsync(string.IsNullOrWhiteSpace(folderId) ? null : folderId);
+
+        var item = _listing?.Items.FirstOrDefault(i => string.Equals(i.Id, itemId, StringComparison.Ordinal));
+        if (item is not null)
         {
-            var item = _listing?.Items.FirstOrDefault(i => i.Id == itemId);
-            if (item is not null)
-            {
-                _currentItem = item;
-                await CurrentItemChanged.InvokeAsync(_currentItem);
-            }
+            _currentItem = item;
+            _selectedItems.Clear();
+            _selectedItems.Add(item);
+            await SelectedItemsChanged.InvokeAsync(_selectedItems);
+            await CurrentItemChanged.InvokeAsync(_currentItem);
         }
     }
 
@@ -382,45 +382,6 @@ public partial class MuddyFileExplorer : IAsyncDisposable
             _operationText = "Download failed";
             await OperationCompleted.InvokeAsync(new FileExplorerOperationEventArgs("Download", item, FileExplorerOperationResult.Fail(ex.Message)));
         }
-    }
-
-    private async Task OpenInNewTabAsync(FileExplorerItem item)
-    {
-        _error = null;
-        _operationText = $"Opening {item.Name}...";
-
-        try
-        {
-            var download = await Provider.DownloadAsync(item.Id);
-            await using var content = download.Content;
-            using var streamRef = new DotNetStreamReference(content);
-
-            var module = await GetJsModuleAsync();
-            await module.InvokeVoidAsync("openFileFromStream", download.ContentType, streamRef);
-
-            _operationText = $"Opened {download.FileName}";
-            await OperationCompleted.InvokeAsync(new FileExplorerOperationEventArgs("Open", item, FileExplorerOperationResult.Ok()));
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-            _operationText = "Open failed";
-            await OperationCompleted.InvokeAsync(new FileExplorerOperationEventArgs("Open", item, FileExplorerOperationResult.Fail(ex.Message)));
-        }
-    }
-
-    private static bool CanOpenInNewTab(FileExplorerItem item)
-    {
-        var contentType = item.ContentType;
-        if (string.IsNullOrWhiteSpace(contentType))
-        {
-            return false;
-        }
-
-        return contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(contentType, "application/pdf", StringComparison.OrdinalIgnoreCase)
-            || contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(contentType, "application/json", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<IJSObjectReference> GetJsModuleAsync()

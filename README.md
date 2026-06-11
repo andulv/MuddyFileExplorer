@@ -67,6 +67,11 @@ Hosts implement `IFileExplorerProvider` for file operations:
 
 The UI-facing models use opaque item IDs. Providers should not expose physical paths to the browser.
 
+## Styling Overrides
+
+See [styling.md](doc/styling.md) for supported CSS hooks and examples for row
+density, font size, cell padding, and folder link/icon sizing.
+
 ## Sample
 
 Run the sample from this folder:

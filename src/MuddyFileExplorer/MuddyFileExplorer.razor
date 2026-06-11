@@ -126,7 +126,7 @@
                 {
                     <col style="width:36px;" />
                 }
-                <col style="width:36px;" />
+                <col style="width:30px;" />
                 <col />
                 <col style="width:80px;" />
                 <col style="width:80px;" />
@@ -140,13 +140,42 @@
                 }
                 <TemplateColumn Title="" Sortable="false" Filterable="false">
                     <CellTemplate Context="cell">
-                        <MudIcon Icon="@GetIcon(cell.Item)" Size="Size.Small" Color="@GetIconColor(cell.Item)" />
+                        @if (cell.Item.IsDirectory)
+                        {
+                            <span @onclick:stopPropagation="true">
+                                <MudIconButton Icon="@GetIcon(cell.Item)"
+                                               Size="Size.Small"
+                                               Color="@GetIconColor(cell.Item)"
+                                               Class="muddy-file-explorer-folder-icon-link"
+                                               aria-label="@($"Open {cell.Item.Name}")"
+                                               OnClick="@(() => OpenItemAsync(cell.Item))" />
+                            </span>
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@GetIcon(cell.Item)" Size="Size.Small" Color="@GetIconColor(cell.Item)" />
+                        }
                     </CellTemplate>
                 </TemplateColumn>
                 <TemplateColumn Title="Name" SortBy="item => item.Name" Sortable="true"
                                 CellStyle="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0;">
                     <CellTemplate Context="cell">
-                        <span title="@cell.Item.Name">@cell.Item.Name</span>
+                        @if (cell.Item.IsDirectory)
+                        {
+                            <span @onclick:stopPropagation="true">
+                                <MudLink Typo="Typo.body2"
+                                         Underline="Underline.Hover"
+                                         Class="muddy-file-explorer-folder-link"
+                                         title="@cell.Item.Name"
+                                         OnClick="@(() => OpenItemAsync(cell.Item))">
+                                    @cell.Item.Name
+                                </MudLink>
+                            </span>
+                        }
+                        else
+                        {
+                            <span title="@cell.Item.Name">@cell.Item.Name</span>
+                        }
                     </CellTemplate>
                 </TemplateColumn>
                 <TemplateColumn Title="Size" SortBy="item => item.Size ?? -1" Sortable="true" CellStyle="white-space:nowrap;">

@@ -42,6 +42,7 @@
 
 ::deep .muddy-file-explorer-grid {
     min-height: 0;
+    font-size: 0.8125rem;
 }
 
 ::deep .muddy-file-explorer-grid table {
@@ -49,10 +50,38 @@
     table-layout: fixed;
 }
 
-::deep .muddy-file-explorer-grid .mud-table-dense .mud-table-row .mud-table-cell {
-    padding: 2px !important;
-    padding-inline-start: 2px !important;
-    padding-inline-end: 2px !important;
+::deep .muddy-file-explorer-grid.mud-table-dense .mud-table-row .mud-table-cell {
+    font-size: 0.8125rem;
+    line-height: 1.1;
+    padding: 2px 4px !important;
+    padding-inline-start: 4px !important;
+    padding-inline-end: 4px !important;
+}
+
+::deep .muddy-file-explorer-grid.mud-table-dense .mud-table-row {
+    height: 28px;
+}
+
+::deep .muddy-file-explorer-grid .mud-typography-body2 {
+    font-size: 0.8125rem;
+    line-height: 1.1;
+}
+
+::deep .muddy-file-explorer-grid .mud-icon-button.muddy-file-explorer-folder-icon-link {
+    height: 20px;
+    width: 20px;
+    padding: 1px;
+}
+
+::deep .muddy-file-explorer-grid .muddy-file-explorer-folder-link {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-size: 0.8125rem;
+    line-height: 1.1;
 }
 
 ::deep .muddy-file-explorer-upload-progress {
