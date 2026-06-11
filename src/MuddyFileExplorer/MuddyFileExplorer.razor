@@ -25,10 +25,38 @@
 
             @if (AllowCreateFolder)
             {
-                <MudButton Variant="Variant.Outlined" Size="Size.Small"
-                           OnClick="CreateFolderAsync" Disabled="@_busy"
-                           StartIcon="@Icons.Material.Filled.CreateNewFolder" Color="Color.Primary">New folder
-                </MudButton>
+                <MudButtonGroup Variant="Variant.Outlined"
+                                Color="Color.Primary"
+                                Size="Size.Small"
+                                Class="muddy-file-explorer-create-group"
+                                DropShadow="false">
+                    <MudButton Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.NoteAdd"
+                               Size="Size.Small"
+                               OnClick="CreateFileAsync"
+                               Style="text-transform:none;"
+                               Disabled="@_busy">
+                        New file
+                    </MudButton>
+                    <MudMenu Icon="@Icons.Material.Filled.ArrowDropDown"
+                             Dense="@Dense"
+                             Variant="Variant.Text"
+                             Color="Color.Primary"
+                             Size="Size.Small"
+                             Disabled="@_busy"
+                             Class="muddy-file-explorer-create-menu"
+                             Style="align-self:auto;"
+                             AriaLabel="Create options"
+                             AnchorOrigin="Origin.BottomRight"
+                             TransformOrigin="Origin.TopRight">
+                        <MudMenuItem Icon="@Icons.Material.Filled.NoteAdd"
+                                     Label="New file"
+                                     OnClick="CreateFileAsync" />
+                        <MudMenuItem Icon="@Icons.Material.Filled.CreateNewFolder"
+                                     Label="New folder"
+                                     OnClick="CreateFolderAsync" />
+                    </MudMenu>
+                </MudButtonGroup>
             }
 
             <MudSpacer />

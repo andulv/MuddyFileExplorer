@@ -118,6 +118,22 @@ public sealed class SandboxFileExplorerProvider(
         return Task.FromResult(FileExplorerOperationResult.Ok("Folder created."));
     }
 
+    public Task<FileExplorerOperationResult> CreateFileAsync(string? parentFolderId, string name, CancellationToken cancellationToken = default)
+    {
+        var parent = ResolvePath(parentFolderId);
+        var target = ResolveChild(parent, CleanName(name));
+
+        if (File.Exists(target) || Directory.Exists(target))
+        {
+            logger.LogWarning("Create file failed – name already exists: {Path}", target);
+            return Task.FromResult(FileExplorerOperationResult.Fail("An item with that name already exists."));
+        }
+
+        using var stream = File.Create(target);
+        logger.LogInformation("File created: {Path}", target);
+        return Task.FromResult(FileExplorerOperationResult.Ok("File created."));
+    }
+
     public Task<FileExplorerOperationResult> RenameAsync(string itemId, string newName, CancellationToken cancellationToken = default)
     {
         var source = ResolvePath(itemId);

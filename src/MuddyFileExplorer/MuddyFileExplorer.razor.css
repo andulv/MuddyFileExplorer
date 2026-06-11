@@ -20,6 +20,15 @@
     white-space: nowrap;
 }
 
+::deep .muddy-file-explorer-create-group .mud-button-root {
+    text-transform: none;
+    padding: 3px 9px;
+}
+
+::deep .muddy-file-explorer-create-menu {
+    align-self: auto;
+}
+
 @container fe-toolbar (max-width: 360px) {
     ::deep .muddy-file-explorer-toolbar .mud-button-root .mud-button-label > :not(.mud-icon-root) {
         display: none;

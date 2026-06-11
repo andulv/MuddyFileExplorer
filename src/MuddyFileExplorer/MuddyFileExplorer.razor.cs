@@ -274,6 +274,37 @@ public partial class MuddyFileExplorer : IAsyncDisposable
         await RunOperationAsync("Create folder", null, () => Provider.CreateFolderAsync(_currentFolderId, name));
     }
 
+    private async Task CreateFileAsync()
+    {
+        var name = await PromptForNameAsync("New file", "File name", "New file.txt");
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        var success = await RunOperationAsync("Create file", null, () => Provider.CreateFileAsync(_currentFolderId, name));
+        if (success)
+        {
+            await SelectItemByNameAsync(name, isDirectory: false);
+        }
+    }
+
+    private async Task SelectItemByNameAsync(string name, bool isDirectory)
+    {
+        var item = (_listing?.Items ?? [])
+            .FirstOrDefault(i => i.IsDirectory == isDirectory && string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (item is null)
+        {
+            return;
+        }
+
+        _currentItem = item;
+        _selectedItems.Clear();
+        _selectedItems.Add(item);
+        await CurrentItemChanged.InvokeAsync(_currentItem);
+        await SelectedItemsChanged.InvokeAsync(_selectedItems);
+    }
+
     private async Task RenameAsync(FileExplorerItem item)
     {
         var name = await PromptForNameAsync("Rename", "Name", item.Name);
@@ -445,7 +476,7 @@ public partial class MuddyFileExplorer : IAsyncDisposable
         await RefreshAsync();
     }
 
-    private async Task RunOperationAsync(string name, FileExplorerItem? item, Func<Task<FileExplorerOperationResult>> operation)
+    private async Task<bool> RunOperationAsync(string name, FileExplorerItem? item, Func<Task<FileExplorerOperationResult>> operation)
     {
         _busy = true;
         _error = null;
@@ -477,6 +508,8 @@ public partial class MuddyFileExplorer : IAsyncDisposable
         {
             await RefreshAsync();
         }
+
+        return result.Success;
     }
 
     private async Task<string?> PromptForNameAsync(string title, string label, string value)
@@ -495,6 +528,7 @@ public partial class MuddyFileExplorer : IAsyncDisposable
     private static DialogOptions DialogOptions() => new()
     {
         CloseButton = true,
+        CloseOnEscapeKey = true,
         MaxWidth = MaxWidth.ExtraSmall,
         FullWidth = true
     };

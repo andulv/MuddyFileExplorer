@@ -15,6 +15,7 @@ A standalone MudBlazor-based file explorer component with a compact list UI. Upl
 - Columns for icon, file name, size, type, and modified date
 - Breadcrumb folder navigation
 - Search/filter box
+- New-file and new-folder actions
 - Upload button and drag-and-drop upload area
 - Queued uploads with per-file progress
 - Provider-driven download action (files and folders)
@@ -56,6 +57,7 @@ Hosts implement `IFileExplorerProvider` for file operations:
 
 - list folder contents
 - list move targets
+- create file
 - create folder
 - rename item
 - move item

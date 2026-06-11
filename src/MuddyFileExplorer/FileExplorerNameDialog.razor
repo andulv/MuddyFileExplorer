@@ -3,22 +3,25 @@
 <MudDialog>
     <DialogContent>
         <MudTextField T="string"
+                      @ref="_nameInput"
                       @bind-Value="_value"
                       Label="@Label"
                       Variant="Variant.Outlined"
                       Margin="Margin.Dense"
                       Immediate="true"
-                      AutoFocus="true"
-                      Required="true" />
+                      Required="true"
+                      OnKeyDown="HandleKeyDown" />
     </DialogContent>
     <DialogActions>
         <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@string.IsNullOrWhiteSpace(_value)" OnClick="Submit">Save</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@string.IsNullOrWhiteSpace(_value)" OnClick="Submit">OK</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
+    private MudTextField<string>? _nameInput;
     private string _value = string.Empty;
+    private bool _selectAllPending;
 
     [CascadingParameter]
     public IMudDialogInstance MudDialog { get; set; } = default!;
@@ -32,6 +35,28 @@
     protected override void OnParametersSet()
     {
         _value = Value;
+        _selectAllPending = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_selectAllPending || _nameInput is null)
+        {
+            return;
+        }
+
+        _selectAllPending = false;
+        await _nameInput.FocusAsync();
+        await Task.Delay(50);
+        await _nameInput.SelectRangeAsync(0, _value.Length);
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !string.IsNullOrWhiteSpace(_value))
+        {
+            Submit();
+        }
     }
 
     private void Submit() => MudDialog.Close(DialogResult.Ok(_value.Trim()));

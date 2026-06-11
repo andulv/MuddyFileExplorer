@@ -10,6 +10,8 @@ public interface IFileExplorerProvider
 
     Task<FileExplorerOperationResult> CreateFolderAsync(string? parentFolderId, string name, CancellationToken cancellationToken = default);
 
+    Task<FileExplorerOperationResult> CreateFileAsync(string? parentFolderId, string name, CancellationToken cancellationToken = default);
+
     Task<FileExplorerOperationResult> RenameAsync(string itemId, string newName, CancellationToken cancellationToken = default);
 
     Task<FileExplorerOperationResult> MoveAsync(string itemId, string destinationFolderId, CancellationToken cancellationToken = default);
