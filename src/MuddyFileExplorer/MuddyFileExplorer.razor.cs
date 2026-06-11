@@ -66,6 +66,9 @@ public partial class MuddyFileExplorer : IAsyncDisposable
     public EventCallback<FileExplorerItem> CurrentItemChanged { get; set; }
 
     [Parameter]
+    public EventCallback<string?> CurrentFolderChanged { get; set; }
+
+    [Parameter]
     public EventCallback<FileExplorerItemEventArgs> ItemOpened { get; set; }
 
     [Parameter]
@@ -194,6 +197,7 @@ public partial class MuddyFileExplorer : IAsyncDisposable
             _operationText = "Ready";
             await SelectedItemsChanged.InvokeAsync(_selectedItems);
             await CurrentItemChanged.InvokeAsync(_currentItem);
+            await CurrentFolderChanged.InvokeAsync(_currentFolderId);
         }
         catch (Exception ex)
         {
