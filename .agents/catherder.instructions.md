@@ -5,7 +5,7 @@ applyTo: "**"
 # CatHerder Process Rules
 These rules apply to all work in this project. They are always active.
 
-If [`catherder-git.instructions.md`](catherder-git.instructions.md) is present, follow it for any work involving repository changes or git operations.
+If an additional repo-local git instruction file is added under `.agents/`, follow it for any work involving repository changes or git operations.
 
 Repository-specific document entry guidance is defined in [`project.instructions.md`](project.instructions.md).
 
@@ -19,17 +19,6 @@ Scope is this project only.
 - Treat files outside the project root as **read-only** by default.
 - Do not edit outside the project unless the user explicitly requests it.
 - If multiple projects are open, confirm the active project root first.
-
-## Project Phase
-Read `project-status-roadmap.md` to determine the current phase.
-Calibrate behaviour accordingly:
-
-| Phase | Mindset |
-|---|---|
-| **Research** | Experimental — speed over durability, drop/recreate DBs OK |
-| **Prototype** | Build-first — breaking changes OK, tests optional per change |
-| **Beta** | Careful — run tests, backward compatibility matters |
-| **Production** | Stable — full rigour, migrations required, all quality gates |
 
 ## Planning vs Execution
 CatHerder enforces a strict separation between planning and execution.
@@ -70,8 +59,8 @@ When multiple instruction sources conflict, follow this order:
 1. **System** instructions (model/runtime)
 2. **Developer** instructions (agent identity and tool rules)
 3. **User** instructions (unless they violate system/developer rules)
-4. **Project process rules** (`.instructions/*.instructions.md`)
-5. **Active plan** (`.instructions/plans/planNNN*/planNNN.md`)
+4. **Project process rules** (`.agents/*.instructions.md`)
+5. **Active plan** (`plans/planNNN*/planNNN*.md`)
 6. **Task file(s)** referenced by the plan
 7. Other project docs / code comments
 8. Host-injected metadata
@@ -86,7 +75,7 @@ Prefer durable artifacts over ephemeral chat:
 
 - Write decisions into the plan `Notes` section (or an ADR if the project
   uses them).
-- Store supporting material under `.instructions/plans/planNNN*/data/`.
+- Store supporting material under `plans/planNNN*/data/`.
 - Use separate task files when a task is too large for a single checkbox.
 - Update timestamps when an artifact changes.
 
