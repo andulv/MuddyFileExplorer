@@ -9,7 +9,7 @@ MuddyFileExplorer is a standalone MudBlazor Razor Class Library for browsing
 and operating on files through a host-provided provider contract.
 
 Read first:
-- [catherder.instructions.md](catherder.instructions.md)
+- [catherder.project.instructions.md](catherder.project.instructions.md)
 - [../README.md](../README.md)
 
 ## Project Shape
